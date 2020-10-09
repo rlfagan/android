@@ -36,11 +36,10 @@ import android.widget.TextView;
 
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.FileDataStorageManager;
-import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager.AsyncThumbnailDrawable;
 import com.owncloud.android.db.PreferenceManager;
-import com.owncloud.android.extensions.VectorExtKt;
+import com.owncloud.android.domain.files.model.OCFile;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.MimetypeIconUtil;
@@ -94,7 +93,7 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
         if (mFiles == null || position < 0 || position >= mFiles.size()) {
             return -1;
         } else {
-            return mFiles.get(position).getFileId();
+            return mFiles.get(position).getId();
         }
     }
 
@@ -113,10 +112,10 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
         OCFile file = mFiles.get(position);
 
         TextView filename = vi.findViewById(R.id.filename);
-        filename.setText(file.getFileName());
+        filename.setText(file.getName());
 
         ImageView fileIcon = vi.findViewById(R.id.thumbnail);
-        fileIcon.setTag(file.getFileId());
+        fileIcon.setTag(file.getId());
 
         TextView lastModV = vi.findViewById(R.id.last_mod);
         lastModV.setText(DisplayUtils.getRelativeTimestamp(mContext, file.getModificationTimestamp()));
@@ -126,7 +125,7 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
 
         fileSizeV.setVisibility(View.VISIBLE);
         fileSizeSeparatorV.setVisibility(View.VISIBLE);
-        fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getFileLength(), mContext));
+        fileSizeV.setText(DisplayUtils.bytesToHumanReadable(file.getLength(), mContext));
 
         // get Thumbnail if file is image
         if (file.isImage() && file.getRemoteId() != null) {
@@ -134,7 +133,7 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
             Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
                     String.valueOf(file.getRemoteId())
             );
-            if (thumbnail != null && !file.needsUpdateThumbnail()) {
+            if (thumbnail != null && !file.getNeedsToUpdateThumbnail()) {
                 fileIcon.setImageBitmap(thumbnail);
             } else {
                 // generate new Thumbnail
@@ -156,7 +155,7 @@ public class ReceiveExternalFilesAdapter extends BaseAdapter implements ListAdap
             }
         } else {
             fileIcon.setImageResource(
-                    MimetypeIconUtil.getFileTypeIconId(file.getMimetype(), file.getFileName())
+                    MimetypeIconUtil.getFileTypeIconId(file.getMimeType(), file.getName())
             );
         }
         return vi;
