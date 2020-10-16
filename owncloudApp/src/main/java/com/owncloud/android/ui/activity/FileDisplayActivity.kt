@@ -1230,7 +1230,6 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
             is RemoveFileOperation -> onRemoveFileOperationFinish(operation, result)
             is RenameFileOperation -> onRenameFileOperationFinish(operation, result)
             is SynchronizeFileOperation -> onSynchronizeFileOperationFinish(operation, result)
-            is CreateFolderOperation -> onCreateFolderOperationFinish(operation, result)
             is MoveFileOperation -> onMoveFileOperationFinish(operation, result)
             is CopyFileOperation -> onCopyFileOperationFinish(operation, result)
         }
@@ -1400,32 +1399,6 @@ class FileDisplayActivity : FileActivity(), FileFragment.ContainerActivity, OnEn
             fileWaitingToPreview = null
         }
 
-    }
-
-    /**
-     * Updates the view associated to the activity after the finish of an operation trying create a
-     * new folder
-     *
-     * @param operation Creation operation performed.
-     * @param result    Result of the creation.
-     */
-    private fun onCreateFolderOperationFinish(
-        operation: CreateFolderOperation,
-        result: RemoteOperationResult<*>
-    ) {
-        if (result.isSuccess) {
-            refreshListOfFilesFragment(true)
-        } else {
-            try {
-                showMessageInSnackbar(
-                    R.id.ListLayout,
-                    ErrorMessageAdapter.getResultMessage(result, operation, resources)
-                )
-            } catch (e: NotFoundException) {
-                Timber.e(e, "Error while trying to show fail message")
-            }
-
-        }
     }
 
     private fun requestForDownload() {
