@@ -40,6 +40,7 @@ import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.datamodel.ThumbnailsCacheManager.AsyncThumbnailDrawable;
 import com.owncloud.android.db.PreferenceManager;
 import com.owncloud.android.domain.files.model.OCFile;
+import com.owncloud.android.extensions.VectorExtKt;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.FileStorageUtils;
 import com.owncloud.android.utils.MimetypeIconUtil;
