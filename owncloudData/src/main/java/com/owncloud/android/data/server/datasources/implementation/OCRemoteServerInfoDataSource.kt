@@ -42,11 +42,11 @@ class OCRemoteServerInfoDataSource(
 
         // Step 1: check whether the root folder exists, following redirections
         var checkPathExistenceResult =
-            serverInfoService.checkPathExistence(path, isUserLogged = false)
+            serverInfoService.checkPathExistence(path, isUserLogged = false, owncloudClient)
         var redirectionLocation = checkPathExistenceResult.redirectedLocation
         while (!redirectionLocation.isNullOrEmpty()) {
             checkPathExistenceResult =
-                serverInfoService.checkPathExistence(redirectionLocation, isUserLogged = false)
+                serverInfoService.checkPathExistence(redirectionLocation, isUserLogged = false, owncloudClient)
             redirectionLocation = checkPathExistenceResult.redirectedLocation
         }
 
@@ -79,7 +79,7 @@ class OCRemoteServerInfoDataSource(
     fun getRemoteStatus(path: String): RemoteServerInfo {
         val ownCloudClient = clientManager.getClientForUnExistingAccount(path, true)
 
-        val remoteStatusResult = serverInfoService.getRemoteStatus(path)
+        val remoteStatusResult = serverInfoService.getRemoteStatus(path, ownCloudClient)
 
         val remoteServerInfo = executeRemoteOperation {
             remoteStatusResult
