@@ -25,43 +25,35 @@
  */
 package com.owncloud.android.ui.preview
 
-import com.owncloud.android.domain.files.model.OCFile.isAvailableLocally
-import com.owncloud.android.domain.files.model.OCFile.isAudio
-import com.owncloud.android.domain.files.model.OCFile.storagePath
-import com.owncloud.android.datamodel.FileDataStorageManager.getFileByPath
-import com.owncloud.android.domain.files.model.OCFile.remotePath
-import com.owncloud.android.ui.fragment.FileFragment
 import android.accounts.Account
-import com.owncloud.android.media.MediaServiceBinder
-import com.owncloud.android.media.MediaControlView
-import android.widget.ProgressBar
-import com.owncloud.android.ui.controller.TransferProgressController
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import timber.log.Timber
-import com.owncloud.android.R
-import com.owncloud.android.ui.preview.PreviewAudioFragment
-import android.media.MediaMetadataRetriever
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import com.owncloud.android.datamodel.FileDataStorageManager
-import android.view.MenuInflater
-import com.owncloud.android.files.FileMenuFilter
-import com.owncloud.android.ui.dialog.RemoveFilesDialogFragment
-import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
-import android.content.Intent
-import com.owncloud.android.media.MediaService
-import android.content.ServiceConnection
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.graphics.BitmapFactory
+import android.media.MediaMetadataRetriever
+import android.os.Bundle
 import android.os.IBinder
+import android.view.LayoutInflater
 import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
+import com.owncloud.android.R
 import com.owncloud.android.domain.files.model.OCFile
+import com.owncloud.android.files.FileMenuFilter
+import com.owncloud.android.media.MediaControlView
+import com.owncloud.android.media.MediaService
+import com.owncloud.android.media.MediaServiceBinder
+import com.owncloud.android.ui.controller.TransferProgressController
+import com.owncloud.android.ui.dialog.ConfirmationDialogFragment
+import com.owncloud.android.ui.dialog.RemoveFilesDialogFragment
+import com.owncloud.android.ui.fragment.FileFragment
 import com.owncloud.android.utils.PreferenceUtils
+import timber.log.Timber
 
 /**
  * This fragment shows a preview of a downloaded audio.
@@ -73,25 +65,23 @@ import com.owncloud.android.utils.PreferenceUtils
  *
  * If the [OCFile] passed is not downloaded, an [IllegalStateException] is
  * generated on instantiation too.
- */
-class PreviewAudioFragment
-/**
+ *
  * Creates an empty fragment for preview audio files.
  * MUST BE KEPT: the system uses it when tries to reinstantiate a fragment automatically
  * (for instance, when the device is turned a aside).
  * DO NOT CALL IT: an [OCFile] and [Account] must be provided for a successful
  * construction
  */
-    : FileFragment() {
-    private var mAccount: Account? = null
-    private var mImagePreview: ImageView? = null
-    private var mSavedPlaybackPosition = 0
-    private var mMediaServiceBinder: MediaServiceBinder? = null
-    private var mMediaController: MediaControlView? = null
-    private var mMediaServiceConnection: MediaServiceConnection? = null
-    private var mAutoplay = true
-    private var mProgressBar: ProgressBar? = null
-    var mProgressController: TransferProgressController? = null
+class PreviewAudioFragment : FileFragment() {
+    private var account: Account? = null
+    private var imagePreview: ImageView? = null
+    private var savedPlaybackPosition = 0
+    private var mediaServiceBinder: MediaServiceBinder? = null
+    private var mediaController: MediaControlView? = null
+    private var mediaServiceConnection: MediaServiceConnection? = null
+    private var autoplay = true
+    private var progressBar: ProgressBar? = null
+    var progressController: TransferProgressController? = null
 
     /**
      * {@inheritDoc}
@@ -105,18 +95,23 @@ class PreviewAudioFragment
      * {@inheritDoc}
      */
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
-        Timber.v("onCreateView")
-        val view = inflater.inflate(R.layout.preview_audio_fragment, container, false)
-        view.filterTouchesWhenObscured =
-            PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(context)
-        mImagePreview = view.findViewById(R.id.image_preview)
-        mMediaController = view.findViewById(R.id.media_controller)
-        mProgressBar = view.findViewById(R.id.syncProgressBar)
-        return view
+
+        return inflater.inflate(R.layout.preview_audio_fragment, container, false).apply {
+            filterTouchesWhenObscured = PreferenceUtils.shouldDisallowTouchesWithOtherVisibleWindows(context)
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        imagePreview = view.findViewById(R.id.image_preview)
+        mediaController = view.findViewById(R.id.media_controller)
+        progressBar = view.findViewById(R.id.syncProgressBar)
     }
 
     /**
@@ -130,29 +125,24 @@ class PreviewAudioFragment
         if (savedInstanceState == null) {
             file = args!!.getParcelable(EXTRA_FILE)
             setFile(file)
-            mAccount = args.getParcelable(EXTRA_ACCOUNT)
-            mSavedPlaybackPosition = args.getInt(EXTRA_PLAY_POSITION)
-            mAutoplay = args.getBoolean(EXTRA_PLAYING)
+            account = args.getParcelable(EXTRA_ACCOUNT)
+            savedPlaybackPosition = args.getInt(EXTRA_PLAY_POSITION)
+            autoplay = args.getBoolean(EXTRA_PLAYING)
         } else {
             file = savedInstanceState.getParcelable(EXTRA_FILE)
             setFile(file)
-            mAccount = savedInstanceState.getParcelable(EXTRA_ACCOUNT)
-            mSavedPlaybackPosition = savedInstanceState.getInt(
-                EXTRA_PLAY_POSITION,
-                args!!.getInt(EXTRA_PLAY_POSITION)
-            )
-            mAutoplay = savedInstanceState.getBoolean(
-                EXTRA_PLAYING,
-                args.getBoolean(EXTRA_PLAYING)
-            )
+            account = savedInstanceState.getParcelable(EXTRA_ACCOUNT)
+            savedPlaybackPosition = savedInstanceState.getInt(EXTRA_PLAY_POSITION, args!!.getInt(EXTRA_PLAY_POSITION))
+            autoplay = savedInstanceState.getBoolean(EXTRA_PLAYING, args.getBoolean(EXTRA_PLAYING))
         }
         checkNotNull(file) { "Instanced with a NULL OCFile" }
-        checkNotNull(mAccount) { "Instanced with a NULL ownCloud Account" }
+        checkNotNull(account) { "Instanced with a NULL ownCloud Account" }
         check(file.isAvailableLocally) { "There is no local file to preview" }
         check(file.isAudio) { "Not an audio file" }
         extractAndSetCoverArt(file)
-        mProgressController = TransferProgressController(mContainerActivity)
-        mProgressController!!.setProgressBar(mProgressBar)
+        progressController = TransferProgressController(mContainerActivity).also {
+            it.setProgressBar(progressBar)
+        }
     }
 
     /**
@@ -162,17 +152,17 @@ class PreviewAudioFragment
      */
     private fun extractAndSetCoverArt(file: OCFile) {
         try {
-            val mmr = MediaMetadataRetriever()
-            mmr.setDataSource(file.storagePath)
-            val data = mmr.embeddedPicture
+            val mediaMetadataRetriever = MediaMetadataRetriever()
+            mediaMetadataRetriever.setDataSource(file.storagePath)
+            val data = mediaMetadataRetriever.embeddedPicture
             if (data != null) {
                 val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-                mImagePreview!!.setImageBitmap(bitmap) //associated cover art in bitmap
+                imagePreview?.setImageBitmap(bitmap) //associated cover art in bitmap
             } else {
-                mImagePreview!!.setImageResource(R.drawable.logo)
+                imagePreview?.setImageResource(R.drawable.logo)
             }
         } catch (t: Throwable) {
-            mImagePreview!!.setImageResource(R.drawable.logo)
+            imagePreview?.setImageResource(R.drawable.logo)
         }
     }
 
@@ -183,10 +173,10 @@ class PreviewAudioFragment
         super.onSaveInstanceState(outState)
         Timber.v("onSaveInstanceState")
         outState.putParcelable(EXTRA_FILE, file)
-        outState.putParcelable(EXTRA_ACCOUNT, mAccount)
-        if (mMediaServiceBinder != null) {
-            outState.putInt(EXTRA_PLAY_POSITION, mMediaServiceBinder!!.currentPosition)
-            outState.putBoolean(EXTRA_PLAYING, mMediaServiceBinder!!.isPlaying)
+        outState.putParcelable(EXTRA_ACCOUNT, account)
+        if (mediaServiceBinder != null) {
+            outState.putInt(EXTRA_PLAY_POSITION, mediaServiceBinder!!.currentPosition)
+            outState.putBoolean(EXTRA_PLAYING, mediaServiceBinder!!.isPlaying)
         }
     }
 
@@ -197,28 +187,27 @@ class PreviewAudioFragment
         if (file != null && file.isAvailableLocally) {
             bindMediaService()
         }
-        mProgressController!!.startListeningProgressFor(getFile(), mAccount)
+        progressController!!.startListeningProgressFor(getFile(), account)
     }
 
     override fun onTransferServiceConnected() {
-        if (mProgressController != null) {
-            mProgressController!!.startListeningProgressFor(file, mAccount)
+        if (progressController != null) {
+            progressController!!.startListeningProgressFor(file, account)
         }
     }
 
-    override fun onFileMetadataChanged(updatedFile: OCFile) {
+    override fun onFileMetadataChanged(updatedFile: OCFile?) {
         if (updatedFile != null) {
             file = updatedFile
         }
-        activity!!.invalidateOptionsMenu()
+        requireActivity().invalidateOptionsMenu()
     }
 
     override fun onFileMetadataChanged() {
-        val storageManager = mContainerActivity.storageManager
-        if (storageManager != null) {
-            file = storageManager.getFileByPath(file.remotePath)
+        mContainerActivity.storageManager?.let {
+            file = it.getFileByPath(file.remotePath)
         }
-        activity!!.invalidateOptionsMenu()
+        requireActivity().invalidateOptionsMenu()
     }
 
     override fun onFileContentChanged() {
@@ -226,11 +215,11 @@ class PreviewAudioFragment
     }
 
     override fun updateViewForSyncInProgress() {
-        mProgressController!!.showProgressBar()
+        progressController?.showProgressBar()
     }
 
     override fun updateViewForSyncOff() {
-        mProgressController!!.hideProgressBar()
+        progressController?.hideProgressBar()
     }
 
     /**
@@ -246,39 +235,42 @@ class PreviewAudioFragment
      */
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        val mf = FileMenuFilter(
+        val fileMenuFilter = FileMenuFilter(
             file,
-            mAccount,
+            account,
             mContainerActivity,
             activity
         )
-        mf.filter(menu, false, false, false, false)
+        fileMenuFilter.filter(
+            menu,
+            false,
+            false,
+            false,
+            false
+        )
 
         // additional restriction for this fragment 
         // TODO allow renaming in PreviewAudioFragment
-        var item = menu.findItem(R.id.action_rename_file)
-        if (item != null) {
-            item.isVisible = false
-            item.isEnabled = false
+        menu.findItem(R.id.action_rename_file).apply {
+            isVisible = false
+            isEnabled = false
         }
 
         // additional restriction for this fragment
-        item = menu.findItem(R.id.action_move)
-        if (item != null) {
-            item.isVisible = false
-            item.isEnabled = false
+        menu.findItem(R.id.action_move).apply {
+            isVisible = false
+            isEnabled = false
         }
 
         // additional restriction for this fragment
-        item = menu.findItem(R.id.action_copy)
-        if (item != null) {
-            item.isVisible = false
-            item.isEnabled = false
+        menu.findItem(R.id.action_copy).apply {
+            isVisible = false
+            isEnabled = false
         }
-        item = menu.findItem(R.id.action_search)
-        if (item != null) {
-            item.isVisible = false
-            item.isEnabled = false
+
+        menu.findItem(R.id.action_search)?.apply {
+            isVisible = false
+            isEnabled = false
         }
     }
 
@@ -297,7 +289,7 @@ class PreviewAudioFragment
             }
             R.id.action_remove_file -> {
                 val dialog = RemoveFilesDialogFragment.newInstance(file)
-                dialog.show(fragmentManager!!, ConfirmationDialogFragment.FTAG_CONFIRMATION)
+                dialog.show(parentFragmentManager, ConfirmationDialogFragment.FTAG_CONFIRMATION)
                 true
             }
             R.id.action_see_details -> {
@@ -329,16 +321,15 @@ class PreviewAudioFragment
     }
 
     override fun onStop() {
-        Timber.v("onStop")
-        mProgressController!!.stopListeningProgressFor(file, mAccount)
-        if (mMediaServiceConnection != null) {
+        progressController?.stopListeningProgressFor(file, account)
+        mediaServiceConnection?.let { mediaConnection ->
             Timber.d("Unbinding from MediaService ...")
-            if (mMediaServiceBinder != null && mMediaController != null) {
-                mMediaServiceBinder!!.unregisterMediaController(mMediaController)
+            if (mediaServiceBinder != null && mediaController != null) {
+                mediaServiceBinder?.unregisterMediaController(mediaController)
             }
-            activity!!.unbindService(mMediaServiceConnection!!)
-            mMediaServiceConnection = null
-            mMediaServiceBinder = null
+            requireActivity().unbindService(mediaConnection)
+            mediaServiceConnection = null
+            mediaServiceBinder = null
         }
         super.onStop()
     }
@@ -347,32 +338,24 @@ class PreviewAudioFragment
         val file = file
         if (restart) {
             Timber.d("restarting playback of %s", file.storagePath)
-            mAutoplay = true
-            mSavedPlaybackPosition = 0
-            mMediaServiceBinder!!.start(mAccount, file, true, 0)
-        } else if (!mMediaServiceBinder!!.isPlaying(file)) {
+            autoplay = true
+            savedPlaybackPosition = 0
+            mediaServiceBinder?.start(account, file, true, 0)
+        } else if (mediaServiceBinder?.isPlaying(file) == false) {
             Timber.d("starting playback of %s", file.storagePath)
-            mMediaServiceBinder!!.start(mAccount, file, mAutoplay, mSavedPlaybackPosition)
-        } else {
-            if (!mMediaServiceBinder!!.isPlaying && mAutoplay) {
-                mMediaServiceBinder!!.start()
-                mMediaController!!.updatePausePlay()
-            }
+            mediaServiceBinder?.start(account, file, autoplay, savedPlaybackPosition)
+        } else if (mediaServiceBinder?.isPlaying == false && autoplay) {
+            mediaServiceBinder?.start()
+            mediaController?.updatePausePlay()
         }
     }
 
     private fun bindMediaService() {
         Timber.d("Binding to MediaService...")
-        if (mMediaServiceConnection == null) {
-            mMediaServiceConnection = MediaServiceConnection()
-            activity!!.bindService(
-                Intent(
-                    activity,
-                    MediaService::class.java
-                ),
-                mMediaServiceConnection!!,
-                Context.BIND_AUTO_CREATE
-            )
+        if (mediaServiceConnection == null) {
+            mediaServiceConnection = MediaServiceConnection().also {
+                activity?.bindService(Intent(activity, MediaService::class.java), it, Context.BIND_AUTO_CREATE)
+            }
             // follow the flow in MediaServiceConnection#onServiceConnected(...)
         }
     }
@@ -382,13 +365,11 @@ class PreviewAudioFragment
      */
     private inner class MediaServiceConnection : ServiceConnection {
         override fun onServiceConnected(component: ComponentName, service: IBinder) {
-            if (activity != null) {
-                if (component ==
-                    ComponentName(activity!!, MediaService::class.java)
-                ) {
+            activity?.let { fragmentActivity ->
+                if (component == ComponentName(fragmentActivity, MediaService::class.java)) {
                     Timber.d("Media service connected")
-                    mMediaServiceBinder = service as MediaServiceBinder
-                    if (mMediaServiceBinder != null) {
+                    mediaServiceBinder = service as MediaServiceBinder
+                    if (mediaServiceBinder != null) {
                         prepareMediaController()
                         playAudio(false)
                         Timber.d("Successfully bound to MediaService, MediaController ready")
@@ -400,24 +381,24 @@ class PreviewAudioFragment
         }
 
         private fun prepareMediaController() {
-            mMediaServiceBinder!!.registerMediaController(mMediaController)
-            if (mMediaController != null) {
-                mMediaController!!.setMediaPlayer(mMediaServiceBinder)
-                mMediaController!!.isEnabled = true
-                mMediaController!!.updatePausePlay()
+            mediaServiceBinder?.registerMediaController(mediaController)
+            mediaController?.let {
+                it.setMediaPlayer(mediaServiceBinder)
+                it.isEnabled = true
+                it.updatePausePlay()
             }
         }
 
         override fun onServiceDisconnected(component: ComponentName) {
-            if (component == ComponentName(activity!!, MediaService::class.java)) {
+            if (component == ComponentName(requireActivity(), MediaService::class.java)) {
                 Timber.w("Media service suddenly disconnected")
-                if (mMediaController != null) {
-                    mMediaController!!.setMediaPlayer(null)
+                if (mediaController != null) {
+                    mediaController!!.setMediaPlayer(null)
                 } else {
                     Timber.w("No media controller to release when disconnected from media service")
                 }
-                mMediaServiceBinder = null
-                mMediaServiceConnection = null
+                mediaServiceBinder = null
+                mediaServiceConnection = null
             }
         }
     }
@@ -432,14 +413,14 @@ class PreviewAudioFragment
     }
 
     fun stopPreview() {
-        mMediaServiceBinder!!.pause()
+        mediaServiceBinder?.pause()
     }
 
     /**
      * Finishes the preview
      */
     private fun finish() {
-        activity!!.onBackPressed()
+        activity?.onBackPressed()
     }
 
     companion object {
@@ -464,14 +445,17 @@ class PreviewAudioFragment
             startPlaybackPosition: Int,
             autoplay: Boolean
         ): PreviewAudioFragment {
-            val frag = PreviewAudioFragment()
-            val args = Bundle()
-            args.putParcelable(EXTRA_FILE, file)
-            args.putParcelable(EXTRA_ACCOUNT, account)
-            args.putInt(EXTRA_PLAY_POSITION, startPlaybackPosition)
-            args.putBoolean(EXTRA_PLAYING, autoplay)
-            frag.arguments = args
-            return frag
+            val args = Bundle().apply {
+                putParcelable(EXTRA_FILE, file)
+                putParcelable(EXTRA_ACCOUNT, account)
+                putInt(EXTRA_PLAY_POSITION, startPlaybackPosition)
+                putBoolean(EXTRA_PLAYING, autoplay)
+            }
+
+            return PreviewAudioFragment().apply {
+                arguments = args
+            }
+
         }
 
         /**
@@ -482,8 +466,6 @@ class PreviewAudioFragment
          * @return 'True' if the file can be handled by the fragment.
          */
         @JvmStatic
-        fun canBePreviewed(file: OCFile?): Boolean {
-            return file != null && file.isAvailableLocally && file.isAudio
-        }
+        fun canBePreviewed(file: OCFile?) = file != null && file.isAvailableLocally && file.isAudio
     }
 }
