@@ -1,6 +1,6 @@
-Changelog for ownCloud Android Client [unreleased] (UNRELEASED)
+Changelog for ownCloud Android Client [2.18.0] (2021-03-30)
 =======================================
-The following sections list the changes in ownCloud Android Client unreleased relevant to
+The following sections list the changes in ownCloud Android Client 2.18.0 relevant to
 ownCloud admins and users.
 
 
@@ -10,6 +10,7 @@ Summary
 
 * Enhancement - Support for apk files: [#2691](https://github.com/owncloud/android/issues/2691)
 * Enhancement - Align previews actions: [#3155](https://github.com/owncloud/android/issues/3155)
+* Enhancement - Test test: [#3157](https://github.com/owncloud/android/issues/3157)
 
 Details
 -------
@@ -30,6 +31,13 @@ Details
 
    https://github.com/owncloud/android/issues/3155
    https://github.com/owncloud/android/pull/3177
+
+* Enhancement - Test test: [#3157](https://github.com/owncloud/android/issues/3157)
+
+   Ssssssssss
+
+   https://github.com/owncloud/android/issues/3157
+   https://github.com/owncloud/android/pull/3179
 
 ## 2.17 (March 2021)
 - Toolbar redesign
