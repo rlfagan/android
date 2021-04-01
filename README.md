@@ -1,4 +1,6 @@
 # [ownCloud](https://owncloud.org) Android app
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frlfagan%2Fandroid.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Frlfagan%2Fandroid?ref=badge_shield)
+
 
 <a href="https://play.google.com/store/apps/details?id=com.owncloud.android"><img src="https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png" height="75"></a><a href="https://f-droid.org/packages/com.owncloud.android/"><img src="https://f-droid.org/badge/get-it-on.png" height="75"></a>
 
@@ -38,3 +40,7 @@ Note: If you want to use the ownCloud production version you have to leave the b
 1. Go to ownCloud tab in F-Droid.
 2. Open versions section.
 3. Download the latest version that contains beta in the name.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Frlfagan%2Fandroid.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Frlfagan%2Fandroid?ref=badge_large)
